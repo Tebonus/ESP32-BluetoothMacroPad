@@ -20,7 +20,7 @@ const unsigned long connectionCheckInterval = 500;
 
 BleKeyboard bleKeyboard(device_name, "Tymek", 100); // (name, manufacturer, battery level %)
 
-void buttonPress(uint8_t, char); //Funkcja nacisniecia skrotu 
+void buttonPress(uint8_t klawisze[], uint8_t numKeys); //Funkcja nacisniecia skrotu 
 
 void setup() {
   pinMode(przycisk, INPUT_PULLUP);
@@ -63,16 +63,19 @@ void loop() {
       //Serial.println("Przycisk nacisniety!");
         lastDebounce=currentMillis;
       if (bleKeyboard.isConnected()) {
-       buttonPress(KEY_F13, 's');
+        uint8_t tab[] ={KEY_F13, 's'};
+       buttonPress(tab, sizeof(tab)/sizeof(tab[0]));
       }
     }
   }
 
   lastState = currentState;
 }
-void buttonPress (uint8_t klawiszspecjalny, char znak){
-    bleKeyboard.press(klawiszspecjalny);
-    bleKeyboard.press(znak);
+void buttonPress (uint8_t klawisze[], uint8_t numKeys){
+    for (int i=0; i<numKeys; i++){
+      bleKeyboard.press(klawisze[i]);
+    }
     delay(50);
     bleKeyboard.releaseAll();
+    
 }
