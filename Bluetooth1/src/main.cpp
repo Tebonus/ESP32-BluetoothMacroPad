@@ -13,12 +13,15 @@ BleKeyboard bleKeyboard(device_name, "Tymek", 100); // (name, manufacturer, batt
 // Przycisk
 int lastState[] = {HIGH,HIGH,HIGH};
 int currentState[2];
-const long debounceDelay = 100; // Czas miedzy nacisnieciami
+const long debounceDelay = 150; // Czas miedzy nacisnieciami
 unsigned long lastDebounce[] = {0,0,0};
+unsigned long holdTime[2];
+unsigned long holdTimeRequired = 1000;
 
 // Czas
 unsigned long lastConnectionCheck = 0;
 const unsigned long connectionCheckInterval = 500;
+unsigned long timerStart1[] = {0,0,0};
 
 
 
@@ -27,7 +30,7 @@ void keyboardPress(uint8_t klawisze[], uint8_t numKeys); // Transfer keys into k
 void buttonPressDetect(unsigned long, int, int); // Detect button press
 void bluetoothCheckManager(unsigned long); //Manages Bluetooth
 void buttonPressScan(unsigned long); // Activates all button detections
-int chceckButtonShortcut(uint8_t, uint8_t, int);
+void sendKey(int); // manages the selection of keys based on button presseed, and then executes these keys
 
 void setup() {
   pinMode(przycisk, INPUT_PULLUP);
@@ -85,51 +88,45 @@ void keyboardPress (uint8_t klawisze[], uint8_t numKeys){
     bleKeyboard.releaseAll();
     
 }
-int chceckButtonShortcut(uint8_t tab[], uint8_t keycount, int button){
+
+void sendKey(int button){
+  uint8_t tab[5];
+  uint8_t keycount=0;
   switch (button) {
     case przycisk:
-     tab[keycount++] = KEY_F13;
-     tab[keycount++] ='s';
-     tab[keycount++] = 'a';
+     tab[keycount++] =KEY_RETURN;
     break;
-    default:
-     tab[keycount++] = KEY_F13;
+    case przycisk2:
+     tab[keycount++] ='u';
+    break;
+    case przycisk3:
      tab[keycount++] ='s';
     break;
   }
-  return 0;
+  keyboardPress(tab, keycount);
 }
 
 void buttonPressDetect(unsigned long currentMillis, int button, int number){
-  currentState[0] = digitalRead(button);
-
-  if ((currentMillis - lastDebounce[0]) > debounceDelay) {
-    if (lastState[0] == HIGH && currentState[0] == LOW) {
+  currentState[number] = digitalRead(button);
+  holdTime[number]=currentMillis-timerStart1[number];
+  if ((currentMillis - lastDebounce[number]) > debounceDelay) {
+    
+    if (lastState[number] == HIGH && currentState[number] == LOW ) {
+      timerStart1[number]=currentMillis;
       //Serial.println("Przycisk nacisniety!");
-        lastDebounce[0]=currentMillis;
-
-      if (bleKeyboard.isConnected()) {
-        
-        uint8_t tab[5];
-        uint8_t keycount=0;
-        switch (button) {
-          case przycisk:
-           tab[keycount++] = KEY_F13;
-           tab[keycount++] ='s';
-           tab[keycount++] = 'a';
-          break;
-          default:
-           tab[keycount++] = KEY_F13;
-           tab[keycount++] ='s';
-          break;
-        }
-        //chceckButtonShortcut(tab[5],keycount,button);
-       keyboardPress(tab, keycount);
-      }
+        lastDebounce[number]=currentMillis;
+        sendKey(button);
+    }
+    else if (currentState[number] == LOW && holdTime[number] > holdTimeRequired){
+      lastDebounce[number]=currentMillis;
+      sendKey(button);
+    }
+    else {
+      holdTime[number]= 0;
     }
   }
 
-  lastState[0] = currentState[0];
+  lastState[number] = currentState[number];
 }
 
 void buttonPressScan(unsigned long currentMillis){
