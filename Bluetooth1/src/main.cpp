@@ -1,22 +1,23 @@
 #include <BleKeyboard.h>
 #include <Arduino.h>
 
-#define onboardled 2 // Led na urzadzeniu
-#define przycisk 4 // Przycisk
+#define onboardled 2 // On board led (who could have guessed)
+#define przycisk 4 // Button1
 #define przycisk2 16 // Button2
 #define przycisk3 17 // Button3
+
 // Bluetooth
-const char* device_name = "Tymek MacroPad"; // Nazwa
-bool is_connected = false; // Podloczono urzadzenie
+const char* device_name = "Tymek MacroPad"; // Name
+bool is_connected = false;
 BleKeyboard bleKeyboard(device_name, "Tymek", 100); // (name, manufacturer, battery level %)
 
 // Przycisk
 int lastState[] = {HIGH,HIGH,HIGH};
 int currentState[2];
-const long debounceDelay = 150; // Czas miedzy nacisnieciami
+const long debounceDelay = 150; // time between button presses
 unsigned long lastDebounce[] = {0,0,0};
 unsigned long holdTime[2];
-unsigned long holdTimeRequired = 1000;
+unsigned long holdTimeRequired = 1000; // time to repeat press
 
 // Czas
 unsigned long lastConnectionCheck = 0;
@@ -42,7 +43,7 @@ void setup() {
   bleKeyboard.begin(); // Start BLE Keyboard
   delay(500);
   Serial.println("Starting the Bluetooth Keyboard"); 
-  Serial.println("v 0.1.1");
+  Serial.println("v 0.5");
   Serial.println("Tymoteusz Brzumowski");
   delay (100);
   digitalWrite(onboardled, LOW); 
@@ -53,10 +54,10 @@ void loop() {
 
   bluetoothCheckManager(currentMillis);
   buttonPressScan(currentMillis);
-  //buttonPressDetect(currentMillis, przycisk2);
 }
 
 //Functions
+
   //Bluetooth
 void bluetoothCheckManager(unsigned long currentMillis){
   if (currentMillis - lastConnectionCheck >= connectionCheckInterval) {
@@ -94,7 +95,8 @@ void sendKey(int button){
   uint8_t keycount=0;
   switch (button) {
     case przycisk:
-     tab[keycount++] =KEY_RETURN;
+     tab[keycount++] =KEY_F13;
+     tab[keycount++] ='s';
     break;
     case przycisk2:
      tab[keycount++] ='u';
